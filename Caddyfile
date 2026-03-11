@@ -1,0 +1,50 @@
+{
+    admin off
+    persist_config off
+    auto_https off
+
+    log {
+        format json
+    }
+}
+
+:{$PORT:80} {
+    log {
+        format json
+    }
+
+    # Security headers
+    header {
+        X-XSS-Protection "1; mode=block"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; img-src 'self' data: https: *; style-src 'self' 'unsafe-inline' https: *; script-src 'self' 'unsafe-inline' https: *; font-src 'self' data: https: *; connect-src 'self' https: *; media-src 'self' https: *; object-src 'none'; frame-src 'self' https: *;"
+        -Server
+    }
+
+    handle /api/* {
+		reverse_proxy {$CONVEX_PRIVATE_DOMAIN}:3210
+	}
+
+	handle {
+        respond /health 200
+		root * /app/dist
+        # Static files
+        file_server {
+            hide .git
+            hide .env*
+        }
+
+        # Compression
+        encode gzip zstd
+
+        # SPA routing (всё, что не /api/*)
+        try_files {path} {path}.html {path}/index.html /index.html
+	}
+
+    # 404 errors
+    handle_errors {
+        rewrite * /{http.error.status_code}.html
+        file_server
+    }
+}
