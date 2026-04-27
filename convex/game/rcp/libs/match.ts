@@ -1,8 +1,8 @@
 import { ConvexError } from "convex/values"
 import { internal } from "../../../_generated/api"
-import { Id } from "../../../_generated/dataModel"
-import { MutationCtx } from "../../../_generated/server"
-import { RPS_STAGES, RPS_STAGES_OPTIONS, RPS_TABLES, RpsStage } from "./rps"
+import type { Id } from "../../../_generated/dataModel"
+import type { MutationCtx } from "../../../_generated/server"
+import { RPS_STAGES, RPS_STAGES_OPTIONS, RPS_TABLES, type RpsStage } from "./rps"
 import { getBalanceSnapshot } from "../../../libs/balances"
 
 /**
@@ -64,7 +64,7 @@ export const createMatch = async (ctx: MutationCtx, roomId: Id<typeof RPS_TABLES
     const players: Id<'users'>[] = [room.creatorId, room.opponentId]
 
     for (const userId of players) {
-      const balance = await getBalanceSnapshot(ctx, userId, room.currency)
+      const balance = await getBalanceSnapshot(ctx, userId)
       
       if (balance.locked !== room.betAmount) {
         await ctx.runMutation(internal.game.rcp.room.leaveByUserId, {userId})

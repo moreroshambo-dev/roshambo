@@ -2,28 +2,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 import { RPS_RESULT_VALIDATOR, RPS_STAGES_VALIDATOR, RPS_TABLES, RPS_TURN_VALIDATOR } from "./game/rcp/libs/rps";
-import { CURRENCY_VALIDATOR } from "./libs/balances";
-
-/** Supported token types for deposits */
-const tokenTypeValidator = v.union(
-  v.literal("TON"),
-  v.literal("USDT"),
-  v.literal("NOT"),
-  v.literal("DOGS"),
-);
-
-/** Deposit transaction statuses */
-const depositStatusValidator = v.union(
-  v.literal("pending"),
-  v.literal("confirmed"),
-  v.literal("failed"),
-  v.literal("pending_review"),
-);
-
-
+import { depositsTables } from "./deposits/tonPay/schema";
 
 export default defineSchema({
   ...authTables,
+  ...depositsTables,
   users: defineTable({
     // Telegram Mini App identification
     telegramId: v.optional(v.number()),
@@ -45,15 +28,12 @@ export default defineSchema({
 
   balances: defineTable({
     userId: v.id("users"),
-    currency: CURRENCY_VALIDATOR,
     /** Spendable amount */
     available: v.number(),
     /** Locked for active games */
     locked: v.number(),
   })
-    .index("by_user", ["userId"])
-    .index("by_user_currency", ["userId", "currency"])
-    .index("by_currency", ["currency"]),
+    .index("by_user", ["userId"]),
 
   matches: defineTable({
     creatorId: v.id("users"),
@@ -117,43 +97,24 @@ export default defineSchema({
     myTurn: RPS_TURN_VALIDATOR,
     opponentTurn: RPS_TURN_VALIDATOR,
   })
-    .index('by_userId', ['userId']),
+    .index('by_userId', ['userId'])
+    .index('by_result', ['result']),
 
-  deposits: defineTable({
-    userId: v.id("users"),
-    walletAddress: v.string(),
-    tokenType: tokenTypeValidator,
-    /** Amount in smallest unit (nanoton for TON) */
-    rawAmount: v.string(),
-    /** Human-readable display amount */
-    displayAmount: v.number(),
-    /** Tokens credited to the game balance */
-    creditedTokens: v.number(),
-    /** System deposit address the user sends to */
-    depositAddress: v.string(),
-    /** Blockchain transaction hash (mock-generated during dev) */
-    txHash: v.string(),
-    /** Current deposit status */
-    status: depositStatusValidator,
-    /** Where the event came from: "mock_blockchain" | "ton_mainnet" */
-    source: v.string(),
-    /** ISO 8601 UTC timestamp when deposit was initiated */
-    initiatedAt: v.string(),
-    /** ISO 8601 UTC timestamp when deposit was confirmed/failed */
-    resolvedAt: v.optional(v.string()),
-    /** Anti-fraud flags (empty = clean) */
-    antifraudFlags: v.optional(v.array(v.string())),
-  })
-    .index("by_userId", ["userId"])
-    .index("by_txHash", ["txHash"])
-    .index("by_status", ["status"]),
+  depositTonTxIdentifier: defineTable({
+      userId: v.id('users'),
+      reference: v.string(),
+      bodyBase64Hash: v.string(),
+      amount: v.number(),
+      asset: v.literal("TON"),
+      status: v.union(v.literal("pending")),
+      senderAddr: v.string(),
+  }),
 
   [RPS_TABLES.QUEUE]: defineTable({
     userId: v.id('users'),
     betAmount: v.number(),
-    currency: CURRENCY_VALIDATOR,
   })
-    .index("by_betAmount_currency", ["betAmount", 'currency'])
+    .index("by_betAmount", ["betAmount"])
     .index("by_userId", ["userId"]),
 
   [RPS_TABLES.ROOMS]: defineTable({
@@ -161,7 +122,6 @@ export default defineSchema({
     opponentId: v.id('users'),
     betAmount: v.number(),
     totalPot: v.number(),
-    currency: CURRENCY_VALIDATOR,
   })
     .index("by_creator", ["creatorId"])
     .index("by_opponent", ["opponentId"]),

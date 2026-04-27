@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { getUser } from "./libs/auth";
 import { RPS_TABLES } from "./game/rcp/libs/rps";
 import { internal } from "./_generated/api";
-import { Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 
 /** Send a WebRTC signaling message (offer, answer, or ICE candidate) */
 export const sendSignal = mutation({

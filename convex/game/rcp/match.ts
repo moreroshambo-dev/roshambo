@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query } from "../../_generated/server";
 import { internal } from "../../_generated/api";
-import { Id } from "../../_generated/dataModel";
+import type { Id } from "../../_generated/dataModel";
 import { requireUser } from "../../libs/auth";
-import { getStageTimeLeftSeconds, resolveMatchResult, resolveRPSWinner, RPS_STAGES, RPS_STAGES_VALIDATOR, RPS_TABLES, RPS_TURN_VALIDATOR, RpsTurn } from "./libs/rps";
+import { getStageTimeLeftSeconds, resolveMatchResult, resolveRPSWinner, RPS_STAGES, RPS_STAGES_VALIDATOR, RPS_TABLES, RPS_TURN_VALIDATOR, type RpsTurn } from "./libs/rps";
 import { creditBalance, deductBlockedFunds, lockBalance, LockBalanceError } from "../../libs/balances";
 import { createMatch, deleteMatch, setStageAndScheduleNext } from "./libs/match";
 
@@ -118,14 +118,12 @@ export const goToMatchStage = internalMutation({
                         await deductBlockedFunds(ctx, {
                             userId: playerId,
                             amount: room.betAmount,
-                            currency: room.currency,
                         })
                     }
 
                     await creditBalance(ctx, {
                         userId: winnerId,
                         amount: room.totalPot,
-                        currency: room.currency,
                     })
                 }
 
@@ -158,7 +156,6 @@ export const goToMatchStage = internalMutation({
                         await lockBalance(ctx, {
                             userId: playerId,
                             amount: room.betAmount,
-                            currency: room.currency,
                         })
                     } catch (error) {
                         if (

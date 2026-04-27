@@ -15,15 +15,21 @@
 
     # Security headers
     header {
-        X-XSS-Protection "1; mode=block"
         X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
-        Content-Security-Policy "default-src 'self'; img-src 'self' data: https: *; style-src 'self' 'unsafe-inline' https: *; script-src 'self' 'unsafe-inline' https: *; font-src 'self' data: https: *; connect-src 'self' https: *; media-src 'self' https: *; object-src 'none'; frame-src 'self' https: *;"
+        Strict-Transport-Security "max-age=31536000"
+        Permissions-Policy "accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), payment=(), publickey-credentials-get=(), serial=(), usb=(), microphone=(self)"
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https: wss:; frame-src 'self' https://telegram.org https://*.telegram.org https://*.t.me https://*.ton.org https://*.tonapi.io https://*.tonconnect.org; upgrade-insecure-requests"
         -Server
     }
 
     handle /api/* {
-		reverse_proxy {$CONVEX_PRIVATE_DOMAIN}:3210
+		reverse_proxy {$PRIVATE_CONVEX_CLOUD_ORIGIN}
+	}
+
+    handle /.well-known/* {
+		reverse_proxy {$PRIVATE_CONVEX_SITE_ORIGIN}
 	}
 
 	handle {
@@ -39,6 +45,8 @@
         encode gzip zstd
 
         # SPA routing (всё, что не /api/*)
+        #
+        # Ебать как важно не проксировать internal-api. Там приватное апи не для интернета
         try_files {path} {path}.html {path}/index.html /index.html
 	}
 

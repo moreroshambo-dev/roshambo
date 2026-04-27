@@ -1,13 +1,10 @@
 {
   "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
+  "references": [{ "path": "./packages/front/tsconfig.json" }],
   "compilerOptions": {
     "paths": {
       "@/convex/*": ["./convex/*"],
-      "@/*": ["./src/*"]
+      "@/*": ["./packages/front/src/*"]
     }
   }
 }

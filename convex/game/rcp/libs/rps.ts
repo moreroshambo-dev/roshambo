@@ -1,7 +1,5 @@
-import { Infer, v } from "convex/values";
-import { Id } from "../../../_generated/dataModel";
-import { MutationCtx } from "../../../_generated/server";
-import { internal } from "../../../_generated/api";
+import { type Infer, v } from "convex/values";
+import type { Id } from "../../../_generated/dataModel";
 
 export const RPS_TABLES = Object.freeze({
   ROOMS: 'rps_rooms',

@@ -1,7 +1,7 @@
 import { v, ConvexError } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getUser, requireUser } from "./libs/auth.ts";
-import { CURRENCY_RPS, ensureBalance, getBalanceSnapshot } from "./libs/balances";
+import { getBalanceSnapshot } from "./libs/balances";
 
 /** Legacy mutation kept for auth callback compatibility */
 export const updateCurrentUser = mutation({
@@ -46,10 +46,9 @@ export const getByTelegramOrCreateUser = internalMutation({
 export const getBalance = query({
   handler: async (ctx) => {
     const {userId} = await requireUser(ctx)
-    const balance = await getBalanceSnapshot(ctx, userId, CURRENCY_RPS);
+    const balance = await getBalanceSnapshot(ctx, userId);
 
     return {
-      currency: balance.currency,
       available: balance.available,
       locked: balance.locked,
     }

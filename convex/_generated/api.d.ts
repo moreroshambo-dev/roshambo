@@ -9,7 +9,11 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as deposits from "../deposits.js";
+import type * as deposits_tonPay_httpRoutes from "../deposits/tonPay/httpRoutes.js";
+import type * as deposits_tonPay_index from "../deposits/tonPay/index.js";
+import type * as deposits_tonPay_internal from "../deposits/tonPay/internal.js";
+import type * as deposits_tonPay_payload from "../deposits/tonPay/payload.js";
+import type * as deposits_tonPay_signature from "../deposits/tonPay/signature.js";
 import type * as game_rcp_autoSelect from "../game/rcp/autoSelect.js";
 import type * as game_rcp_history from "../game/rcp/history.js";
 import type * as game_rcp_libs_match from "../game/rcp/libs/match.js";
@@ -34,7 +38,11 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  deposits: typeof deposits;
+  "deposits/tonPay/httpRoutes": typeof deposits_tonPay_httpRoutes;
+  "deposits/tonPay/index": typeof deposits_tonPay_index;
+  "deposits/tonPay/internal": typeof deposits_tonPay_internal;
+  "deposits/tonPay/payload": typeof deposits_tonPay_payload;
+  "deposits/tonPay/signature": typeof deposits_tonPay_signature;
   "game/rcp/autoSelect": typeof game_rcp_autoSelect;
   "game/rcp/history": typeof game_rcp_history;
   "game/rcp/libs/match": typeof game_rcp_libs_match;

@@ -5,17 +5,17 @@ WORKDIR /app
 
 RUN npm i -g pnpm
 
-# Копируем package.json и package-lock.json
-COPY package.json pnpm-lock.yaml ./
+# Копируем package.json и lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/front/package.json packages/front/.
 
 # Устанавливаем зависимости
 RUN pnpm install
 
 # Копируем исходники
 COPY convex ./convex
-COPY src ./src
-COPY public ./public
-COPY index.html vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
+COPY packages/front ./packages/front
+COPY tsconfig.json ./
 
 # Собираем фронтенд
 RUN pnpm run build

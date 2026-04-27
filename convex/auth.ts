@@ -1,7 +1,6 @@
 import {ConvexCredentials} from "@convex-dev/auth/providers/ConvexCredentials";
 import {convexAuth} from "@convex-dev/auth/server";
 import {internal} from "./_generated/api";
-import { Id } from "./_generated/dataModel";
 
 const AUTH_PROVIDERS = {
   tgMiniApp: 'tgMiniApp',
@@ -12,30 +11,33 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     ConvexCredentials({
       id: AUTH_PROVIDERS.tgMiniApp,
       authorize: async (credentials, ctx) => {
+        console.log(1, credentials)
+
         if (typeof credentials.authData !== 'string') {
+          console.log('ConvexCredentials: credentials.authData is nil')
           return null
         }
 
-        if (credentials.authData === 'Dev Player') {
-          return {userId: 'kd76qb10k1yjk126n49njkkb2d83k4nm' as Id<"users">}
-        }
-
-        if (credentials.authData === 'Dev Player#123') {
-          return {userId: 'kd7fcaafrhsydm28ptqbhk62ah83j4xa' as Id<"users">}
-        }
-
-
-        console.log(credentials)
+        console.log(2, credentials)
         
         const initData = await ctx.runAction(internal.telegram.validateAuthData, {authData: credentials.authData})
 
-        console.log('initData', initData)
-
+        console.log(3, initData)
         if (!initData) {
+          console.log('ConvexCredentials: initData is nil')
+
           return null
         }
-      
+              console.log(4)
+
         const userId = await ctx.runMutation(internal.users.getByTelegramOrCreateUser, initData.user)
+              console.log(5, userId)
+
+        if (!userId) {
+          console.log('ConvexCredentials: userId is nil')
+        } else {
+          console.log('userId: '+userId)
+        }
 
         return {userId}
       },

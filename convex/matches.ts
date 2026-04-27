@@ -1,28 +1,26 @@
 import { query } from "./_generated/server";
+import { RPS_RESULT, RPS_TABLES } from "./game/rcp/libs/rps.ts";
 import { getUser } from "./libs/auth.ts";
-import { CURRENCY_RPS } from "./libs/balances";
 
 /** Real-time feed of recent wins (last 20 completed matches with a winner) */
 export const getRecentWins = query({
   args: {},
   handler: async (ctx) => {
     const completed = await ctx.db
-      .query("matches")
-      .withIndex("by_status", (q) => q.eq("status", "completed"))
+      .query(RPS_TABLES.HISTORY)
+      .withIndex('by_result', (q) => q.eq('result', RPS_RESULT.WIN))
       .order("desc")
       .take(40);
 
     // Only matches with a winner (not draws)
-    const withWinner = completed.filter((m) => m.winnerId);
-
     const enriched = await Promise.all(
-      withWinner.slice(0, 20).map(async (match) => {
-        const winner = match.winnerId ? await ctx.db.get(match.winnerId) : null;
+      completed.slice(0, 20).map(async (match) => {
+        const winner = match.userId ? await ctx.db.get(match.userId) : null;
         return {
           _id: match._id,
           _creationTime: match._creationTime,
           winnerName: winner?.name ?? "Anonymous",
-          winnerId: match.winnerId,
+          winnerId: match.userId,
           betAmount: match.betAmount,
           payout: match.betAmount * 2,
         };
@@ -83,7 +81,7 @@ export const getLeaderboard = query({
     const todayUTC = new Date().toISOString().slice(0, 10);
     const [allUsers, allBalances] = await Promise.all([
       ctx.db.query("users").collect(),
-      ctx.db.query("balances").withIndex("by_currency", (q) => q.eq("currency", CURRENCY_RPS)).collect(),
+      ctx.db.query("balances").collect(),
     ]);
 
     const balanceMap = new Map<string, number>();

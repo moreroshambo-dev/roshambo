@@ -1,11 +1,10 @@
 import { v } from "convex/values";
-import { Id } from "../../_generated/dataModel";
+import type { Id } from "../../_generated/dataModel";
 import { internalMutation, internalQuery, mutation, query } from "../../_generated/server";
 import { requireUser } from "../../libs/auth";
-import { CURRENCY_VALIDATOR, lockBalance, unlockBalance } from "../../libs/balances";
+import { lockBalance, unlockBalance } from "../../libs/balances";
 import { internal } from "../../_generated/api";
 import { getOpponentFromQueue, getQueueByUserId, joinToQueue, leaveQueue } from "./libs/room";
-import { RPS_STAGES } from "./libs/rps";
 
 const RPS_ROOMS_TABLE = 'rps_rooms' as const
 
@@ -36,7 +35,6 @@ export const internalJoin = internalMutation({
     args: {
         betAmount: v.number(),
         userId: v.id('users'),
-        currency: CURRENCY_VALIDATOR,
     },
     handler: async (ctx, args) => {
         const room = await ctx.runQuery(internal.game.rcp.room.getRoomByUser, {userId: args.userId})
@@ -51,7 +49,7 @@ export const internalJoin = internalMutation({
             return
         }
 
-        const opponentQueue = await getOpponentFromQueue(ctx, args.userId, args.betAmount, args.currency)
+        const opponentQueue = await getOpponentFromQueue(ctx, args.userId, args.betAmount)
 
         if (opponentQueue) {
             await leaveQueue(ctx, opponentQueue.userId)
@@ -62,7 +60,6 @@ export const internalJoin = internalMutation({
                 await lockBalance(ctx, {
                     userId: id,
                     amount: args.betAmount,
-                    currency: args.currency,
                 })
             }
 
@@ -71,12 +68,11 @@ export const internalJoin = internalMutation({
                 creatorId: args.userId,
                 betAmount: args.betAmount,
                 totalPot: args.betAmount * 1.99,
-                currency: args.currency,
             })
 
             await ctx.runMutation(internal.game.rcp.match.createMatchByRoomId, {roomId})
         } else {
-            await joinToQueue(ctx, args.userId, args.betAmount, args.currency)
+            await joinToQueue(ctx, args.userId, args.betAmount)
         }
     }
 })
@@ -84,7 +80,6 @@ export const internalJoin = internalMutation({
 export const join = mutation({
     args: {
         betAmount: v.number(),
-        currency: CURRENCY_VALIDATOR,
     },
     handler: async (ctx, args) => {
         const {userId} = await requireUser(ctx)
@@ -92,7 +87,6 @@ export const join = mutation({
         await ctx.runMutation(internal.game.rcp.room.internalJoin, {
             userId,
             betAmount: args.betAmount,
-            currency: args.currency,
         })
     }
 })
@@ -115,8 +109,8 @@ export const leaveByUserId = internalMutation({
         if (match) {
             // `RPS_STAGES.TURN_RESOLVED` - единственная стадия где у игроком нет заблокированного баланса,
             // по этому если стадии НЕ `RPS_STAGES.TURN_RESOLVED` нужно снять блокировку со счета
-            await unlockBalance(ctx, args.userId, room.betAmount, room.currency)
-            await unlockBalance(ctx, opponentId, room.betAmount, room.currency)
+            await unlockBalance(ctx, args.userId, room.betAmount)
+            await unlockBalance(ctx, opponentId, room.betAmount)
 
             await ctx.runMutation(internal.game.rcp.match.deleteMatchById, {matchId: match._id});
         }
@@ -126,7 +120,6 @@ export const leaveByUserId = internalMutation({
         await ctx.runMutation(internal.game.rcp.room.internalJoin, {
             betAmount: room.betAmount,
             userId: opponentId,
-            currency: room.currency,
         });
     },
 }) 
@@ -178,7 +171,8 @@ export const get = query({
         }
 
         return {
-            status: 'wait-opponent' as const
+            status: 'wait-opponent' as const,
+            betAmount: queuePosition.betAmount,
         }
     }
 })
